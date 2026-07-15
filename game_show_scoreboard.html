@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schlag den Köln - Game Night Scoreboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', 'Impact', sans-serif;
+            background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Main container for all content */
+        .game_show_container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #FFD700;
+            border: 8px solid #333;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Header section */
+        .game_show_header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(180deg, #FFF 0%, #FFD700 100%);
+            border: 5px solid #333;
+            border-radius: 15px;
+        }
+
+        .game_show_header h1 {
+            font-size: 48px;
+            color: #333;
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        /* Main content layout grid */
+        .game_show_content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Scoreboard section - Left column */
+        .scoreboard_section {
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            border: 8px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .scoreboard_section h2 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Player score card */
+        .player_card {
+            background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+            border: 5px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .player_name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
+        }
+
+        .player_score {
+            background: #333;
+            color: #FFD700;
+            font-size: 56px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px;
+            border: 3px solid #FFD700;
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Game progress boxes */
+        .games_played_section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            border: 3px solid #333;
+        }
+
+        .games_played_label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .game_boxes_container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .game_box {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #333;
+            background: #ccc;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .game_box.completed {
+            background: #333;
+            color: #FFD700;
+        }
+
+        /* Spinner wheel section - Center column */
+        .spinner_section {
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            border: 8px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner_section h2 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .wheel_container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 20px auto;
+        }
+
+        .wheel_canvas {
+            width: 100%;
+            height: 100%;
+            border: 8px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .selected_game_display {
+            background: #333;
+            color: #FFD700;
+            font-size: 36px;
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 3px solid #FFD700;
+            text-align: center;
+            margin: 15px 0;
+            min-width: 150px;
+        }
+
+        .spin_button {
+            background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+            border: 5px solid #333;
+            color: #333;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-family: 'Arial Black', 'Impact', sans-serif;
+        }
+
+        .spin_button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .spin_button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Points section - Right column */
+        .points_section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .points_box {
+            background: #333;
+            border: 5px solid #FFD700;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .points_box h3 {
+            color: #FFD700;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .points_display {
+            background: #FFD700;
+            color: #333;
+            font-size: 48px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            border: 3px solid #333;
+            margin-bottom: 10px;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .points_label {
+            color: #FFD700;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Control section */
+        .control_section {
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            border: 8px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .control_section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .control_buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn_main {
+            background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+            border: 5px solid #333;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-family: 'Arial Black', 'Impact', sans-serif;
+        }
+
+        .btn_main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Modal styles */
+        .modal_overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal_overlay.active {
+            display: flex;
+        }
+
+        .modal_dialog {
+            background: #FFD700;
+            border: 8px solid #333;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal_dialog h2 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal_dialog p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal_buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal_buttons button {
+            background: #333;
+            color: #FFD700;
+            border: 3px solid #FFD700;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            font-family: 'Arial Black', 'Impact', sans-serif;
+        }
+
+        .modal_buttons button:hover {
+            background: #FFD700;
+            color: #333;
+            border-color: #333;
+        }
+
+        /* Weiter button - main action button */
+        .weiter_button {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            font-size: 24px;
+            padding: 20px;
+            border: 5px solid #333;
+            border-radius: 12px;
+        }
+
+        .weiter_button:hover {
+            background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+        }
+
+        /* Responsive design */
+        @media (max-width: 1400px) {
+            .game_show_content {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .points_section {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .game_show_content {
+                grid-template-columns: 1fr;
+            }
+
+            .points_section {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .spinner_section {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game_show_container">
+        <!-- Header -->
+        <div class="game_show_header">
+            <h1>🎮 Schlag den Köln 🎮</h1>
+            <p style="font-size: 18px; color: #666;">15-Spiele Turnier</p>
+        </div>
+
+        <!-- Main content grid -->
+        <div class="game_show_content">
+            <!-- Scoreboard section -->
+            <div class="scoreboard_section">
+                <h2>Punkte</h2>
+                
+                <!-- Player 1 card -->
+                <div class="player_card">
+                    <div class="player_name" id="player_1_name">Player 1</div>
+                    <div class="player_score" id="player_1_score">0</div>
+                </div>
+
+                <!-- Player 2 card -->
+                <div class="player_card">
+                    <div class="player_name" id="player_2_name">Player 2</div>
+                    <div class="player_score" id="player_2_score">0</div>
+                </div>
+
+                <!-- Games played tracker -->
+                <div class="games_played_section">
+                    <div class="games_played_label">Gespielte Spiele:</div>
+                    <div class="game_boxes_container" id="game_boxes_container">
+                        <!-- Dynamically populated with 15 game boxes -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spinner wheel section -->
+            <div class="spinner_section">
+                <h2>Nächstes Spiel</h2>
+                
+                <!-- Canvas for wheel drawing -->
+                <div class="wheel_container">
+                    <canvas id="wheel_canvas" class="wheel_canvas" width="280" height="280"></canvas>
+                </div>
+
+                <!-- Selected game display -->
+                <div class="selected_game_display" id="selected_game_display">
+                    Spiel ?
+                </div>
+
+                <!-- Spin button -->
+                <button class="spin_button" id="spin_button" onclick="spin_the_wheel()">
+                    ⭐ DREHEN ⭐
+                </button>
+            </div>
+
+            <!-- Points display section -->
+            <div class="points_section">
+                <!-- Played points box -->
+                <div class="points_box">
+                    <h3>Gespielte Punkte</h3>
+                    <div class="points_display" id="played_points_total">0</div>
+                    <div class="points_label">von 120</div>
+                </div>
+
+                <!-- Available points box -->
+                <div class="points_box">
+                    <h3>Offene Punkte</h3>
+                    <div class="points_display" id="available_points_total">120</div>
+                    <div class="points_label">noch zu vergeben</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control section -->
+        <div class="control_section">
+            <h2>Spiel Kontrolle</h2>
+            <div class="control_buttons">
+                <button class="btn_main" onclick="mark_game_winner()">
+                    ✓ Gewinner Wählen
+                </button>
+                <button class="btn_main" onclick="reset_tournament()">
+                    ↺ Zurücksetzen
+                </button>
+                <button class="btn_main weiter_button" onclick="continue_game()">
+                    WEITER →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner selection modal -->
+    <div class="modal_overlay" id="winner_modal">
+        <div class="modal_dialog">
+            <h2 id="modal_title">Wer hat Spiel ? gewonnen?</h2>
+            <p style="font-size: 16px; margin-bottom: 30px;">
+                <span id="modal_points">0</span> Punkte zu gewinnen
+            </p>
+            <div class="modal_buttons">
+                <button onclick="award_game_to_player(1)">
+                    <span id="modal_player_1_name">Player 1</span>
+                </button>
+                <button onclick="award_game_to_player(2)">
+                    <span id="modal_player_2_name">Player 2</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state variables - stores all tournament data
+        let game_state = {
+            player_1_name: 'Alexander',
+            player_2_name: 'Joey',
+            player_1_score: 0,
+            player_2_score: 0,
+            completed_games: new Set(),
+            remaining_games: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
+            current_selected_game: null,
+            is_spinning: false
+        };
+
+        // Calculate maximum possible points (1+2+3+...+15 = 120)
+        const total_possible_points = 120;
+
+        // Initialize the game interface when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            initialize_game_show();
+        });
+
+        /**
+         * Initialize all game show elements
+         * Sets up the wheel, scoreboard, and all UI elements
+         */
+        function initialize_game_show() {
+            // Update player names in UI
+            document.getElementById('player_1_name').textContent = game_state.player_1_name;
+            document.getElementById('player_2_name').textContent = game_state.player_2_name;
+            document.getElementById('modal_player_1_name').textContent = game_state.player_1_name;
+            document.getElementById('modal_player_2_name').textContent = game_state.player_2_name;
+
+            // Create game boxes for tracking completed games
+            create_game_boxes();
+
+            // Draw the spinner wheel
+            draw_spinner_wheel();
+
+            // Update score displays
+            update_score_display();
+
+            // Update points display
+            update_points_display();
+        }
+
+        /**
+         * Create 15 game tracking boxes (1-15)
+         * These show which games have been played and which remain
+         */
+        function create_game_boxes() {
+            const container = document.getElementById('game_boxes_container');
+            container.innerHTML = '';
+
+            // Create a box for each game (1-15)
+            for (let game_num = 1; game_num <= 15; game_num++) {
+                const box = document.createElement('div');
+                box.className = 'game_box';
+                
+                // Mark as completed if game has been played
+                if (game_state.completed_games.has(game_num)) {
+                    box.classList.add('completed');
+                }
+                
+                box.textContent = game_num;
+                container.appendChild(box);
+            }
+        }
+
+        /**
+         * Draw the spinner wheel with 15 segments
+         * Uses canvas to draw a colorful wheel with numbers 1-15
+         */
+        function draw_spinner_wheel() {
+            const canvas = document.getElementById('wheel_canvas');
+            const ctx = canvas.getContext('2d');
+            const center_x = canvas.width / 2;
+            const center_y = canvas.height / 2;
+            const radius = canvas.width / 2 - 10;
+            
+            // Number of segments (games 1-15)
+            const segment_count = 15;
+            const segment_angle = (2 * Math.PI) / segment_count;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw wheel segments
+            for (let i = 0; i < segment_count; i++) {
+                const start_angle = i * segment_angle;
+                const end_angle = start_angle + segment_angle;
+
+                // Alternate colors: yellow and green
+                if (i % 2 === 0) {
+                    ctx.fillStyle = '#FFD700';
+                } else {
+                    ctx.fillStyle = '#90EE90';
+                }
+
+                // Draw segment (pizza slice)
+                ctx.beginPath();
+                ctx.moveTo(center_x, center_y);
+                ctx.arc(center_x, center_y, radius, start_angle, end_angle);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw number in segment
+                ctx.save();
+                ctx.translate(center_x, center_y);
+                ctx.rotate(start_angle + segment_angle / 2);
+                ctx.translate(radius * 0.7, 0);
+                ctx.rotate(-start_angle - segment_angle / 2);
+                
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(String(i + 1), 0, 0);
+                ctx.restore();
+            }
+
+            // Draw center circle
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(center_x, center_y, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(center_x, center_y, 10, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Draw pointer at top
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.moveTo(center_x - 10, 5);
+            ctx.lineTo(center_x + 10, 5);
+            ctx.lineTo(center_x, 25);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        /**
+         * Spin the wheel and select a random remaining game
+         * Animates the wheel spinning and selects a game that hasn't been played yet
+         */
+        function spin_the_wheel() {
+            // Prevent spinning if already spinning or all games completed
+            if (game_state.is_spinning || game_state.remaining_games.size === 0) {
+                return;
+            }
+
+            game_state.is_spinning = true;
+            document.getElementById('spin_button').disabled = true;
+
+            // Get remaining games as array
+            const remaining_array = Array.from(game_state.remaining_games);
+            
+            // Randomly select from remaining games
+            const random_index = Math.floor(Math.random() * remaining_array.length);
+            const selected_game = remaining_array[random_index];
+
+            // Simulate spinning animation
+            const spin_duration = 1500; // milliseconds
+            const start_time = Date.now();
+
+            // Animation loop for spinning effect
+            const animate_spin = setInterval(function() {
+                const elapsed = Date.now() - start_time;
+                const progress = Math.min(elapsed / spin_duration, 1);
+                
+                if (progress >= 1) {
+                    clearInterval(animate_spin);
+                    game_state.current_selected_game = selected_game;
+                    game_state.is_spinning = false;
+                    document.getElementById('spin_button').disabled = false;
+                    
+                    // Update display with selected game
+                    document.getElementById('selected_game_display').textContent = `Spiel ${selected_game}`;
+                }
+            }, 20);
+
+            // Update selected game display immediately
+            game_state.current_selected_game = selected_game;
+            document.getElementById('selected_game_display').textContent = `Spiel ${selected_game}`;
+        }
+
+        /**
+         * Open winner selection modal
+         * Allows user to choose which player won the current game
+         */
+        function mark_game_winner() {
+            // Must have selected a game first
+            if (!game_state.current_selected_game) {
+                alert('Bitte drehen Sie zuerst das Rad!');
+                return;
+            }
+
+            // Cannot mark completed games
+            if (game_state.completed_games.has(game_state.current_selected_game)) {
+                alert('Dieses Spiel wurde bereits gespielt!');
+                return;
+            }
+
+            // Update modal with current game info
+            const game_num = game_state.current_selected_game;
+            document.getElementById('modal_title').textContent = `Wer hat Spiel ${game_num} gewonnen?`;
+            document.getElementById('modal_points').textContent = game_num;
+
+            // Show modal
+            document.getElementById('winner_modal').classList.add('active');
+        }
+
+        /**
+         * Award game points to selected player
+         * Updates scores, marks game as completed, updates all displays
+         */
+        function award_game_to_player(player_num) {
+            const game_num = game_state.current_selected_game;
+            const game_points = game_num;
+
+            // Award points to winner
+            if (player_num === 1) {
+                game_state.player_1_score += game_points;
+            } else {
+                game_state.player_2_score += game_points;
+            }
+
+            // Mark game as completed and remove from remaining
+            game_state.completed_games.add(game_num);
+            game_state.remaining_games.delete(game_num);
+
+            // Close modal
+            document.getElementById('winner_modal').classList.remove('active');
+
+            // Update all UI elements
+            update_score_display();
+            update_points_display();
+            create_game_boxes();
+
+            // Reset selected game
+            game_state.current_selected_game = null;
+            document.getElementById('selected_game_display').textContent = 'Spiel ?';
+
+            // Check if tournament is complete
+            if (game_state.remaining_games.size === 0) {
+                setTimeout(function() {
+                    announce_winner();
+                }, 500);
+            }
+        }
+
+        /**
+         * Update score display for both players
+         * Shows current points for each player
+         */
+        function update_score_display() {
+            document.getElementById('player_1_score').textContent = game_state.player_1_score;
+            document.getElementById('player_2_score').textContent = game_state.player_2_score;
+        }
+
+        /**
+         * Update points display
+         * Shows played points total and remaining available points
+         */
+        function update_points_display() {
+            // Calculate played points (sum of all completed games)
+            let played_points = 0;
+            game_state.completed_games.forEach(game_num => {
+                played_points += game_num;
+            });
+
+            // Calculate available points (sum of remaining games)
+            let available_points = total_possible_points - played_points;
+
+            document.getElementById('played_points_total').textContent = played_points;
+            document.getElementById('available_points_total').textContent = available_points;
+        }
+
+        /**
+         * Continue game (Weiter button)
+         * Currently just shows a message, can be expanded for more functionality
+         */
+        function continue_game() {
+            alert('Spiel lädt... Viel Spaß!');
+        }
+
+        /**
+         * Announce the tournament winner
+         * Shows congratulations message when all 15 games are complete
+         */
+        function announce_winner() {
+            let winner_text = '';
+            if (game_state.player_1_score > game_state.player_2_score) {
+                winner_text = `${game_state.player_1_name} gewinnt!\n${game_state.player_1_score} : ${game_state.player_2_score}`;
+            } else if (game_state.player_2_score > game_state.player_1_score) {
+                winner_text = `${game_state.player_2_name} gewinnt!\n${game_state.player_1_score} : ${game_state.player_2_score}`;
+            } else {
+                winner_text = `Unentschieden!\n${game_state.player_1_score} : ${game_state.player_2_score}`;
+            }
+            alert(winner_text);
+        }
+
+        /**
+         * Reset tournament to starting state
+         * Clears all scores and completed games, allows new tournament to start
+         */
+        function reset_tournament() {
+            if (confirm('Möchten Sie das Turnier wirklich zurücksetzen?')) {
+                game_state.player_1_score = 0;
+                game_state.player_2_score = 0;
+                game_state.completed_games.clear();
+                game_state.remaining_games = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+                game_state.current_selected_game = null;
+
+                // Update all displays
+                update_score_display();
+                update_points_display();
+                create_game_boxes();
+                document.getElementById('selected_game_display').textContent = 'Spiel ?';
+            }
+        }
+    </script>
+</body>
+</html>
