@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Night - Interactive Scoreboard</title>
+    <!-- Chart.js for pie chart visualization: https://www.chartjs.org/docs/latest/ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        body.light-theme {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .light-theme .header {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .theme-toggle {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: #764ba2;
+        }
+
+        .light-theme .theme-toggle {
+            background: #764ba2;
+        }
+
+        .light-theme .theme-toggle:hover {
+            background: #667eea;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Player scores and analytics section */
+        .analytics-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .light-theme .analytics-section {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .analytics-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .player-scores {
+            margin-bottom: 30px;
+        }
+
+        .player-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .player-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .light-theme .player-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .player-total {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .progress-section {
+            margin-top: 25px;
+        }
+
+        .progress-label {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .light-theme .progress-label {
+            color: #333;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Games grid section */
+        .games-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .light-theme .games-section {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .games-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .game-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .game-button:hover:not(.completed) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .game-button.completed {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Game suggestions section */
+        .suggestions-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .light-theme .suggestions-section {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .suggestions-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .suggestion-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .light-theme .suggestion-group {
+            background: #f0f0f0;
+        }
+
+        .suggestion-points {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .suggestion-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .suggestion-list li {
+            color: #555;
+            padding: 5px 0;
+            font-size: 13px;
+        }
+
+        .light-theme .suggestion-list li {
+            color: #333;
+        }
+
+        /* Modal for game details */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-start {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .btn-start:hover {
+            background: #764ba2;
+        }
+
+        .btn-cancel {
+            background: #ccc;
+            color: #333;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #aaa;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .games-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with title and theme toggle -->
+        <div class="header">
+            <h1>🎮 Game Night Tournament</h1>
+            <button class="theme-toggle" id="theme_toggle_btn">🌙 Dark Theme</button>
+        </div>
+
+        <!-- Main content grid -->
+        <div class="main-content">
+            <!-- Analytics and scores section -->
+            <div class="analytics-section">
+                <h2>Player Scores</h2>
+                
+                <!-- Player score cards -->
+                <div class="player-scores" id="player_scores_container">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Pie chart for score distribution -->
+                <div class="chart-container">
+                    <canvas id="score_distribution_chart"></canvas>
+                </div>
+
+                <!-- Progress bar showing game completion -->
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span>Games Completed</span>
+                        <span><span id="completed_games_count">0</span>/15</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress_fill_bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game suggestions section -->
+            <div class="suggestions-section">
+                <h2>Game Suggestions</h2>
+                <div id="suggestions_container">
+                    <!-- Dynamically populated with game suggestions -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Games grid section -->
+        <div class="games-section">
+            <h2>Select a Game</h2>
+            <div class="games-grid" id="games_grid_container">
+                <!-- Dynamically populated with game buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for game details and scoring -->
+    <div id="game_modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal_game_title">Game 1: Trivia</h2>
+            <p id="modal_game_points">Points: 1</p>
+            <p id="modal_game_description">Description will appear here</p>
+            <div class="modal-buttons">
+                <button class="btn-start" onclick="mark_game_completed()">Mark as Completed</button>
+                <button class="btn-cancel" onclick="close_game_modal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration: Player names and game suggestions
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide
+        const player_names = ['Alice', 'Bob', 'Charlie'];
+        
+        // Game suggestions organized by point level (1-3, 4-7, 8-12, 13-15)
+        const game_suggestions = {
+            'Quick Games (1-3 points)': [
+                'Trivia Questions',
+                'Rock Paper Scissors',
+                'Rhyme Time',
+                'Quick Draw'
+            ],
+            'Medium Games (4-7 points)': [
+                'Word Association',
+                'Memory Challenge',
+                '20 Questions',
+                'Brain Teaser'
+            ],
+            'Complex Games (8-12 points)': [
+                'Strategy Game',
+                'Puzzle Challenge',
+                'Riddle Quest',
+                'Logic Problem'
+            ],
+            'Ultimate Games (13-15 points)': [
+                'Tournament Finals',
+                'Championship Challenge',
+                'Grand Strategy'
+            ]
+        };
+
+        // Initialize player scores - tracking total points for each player
+        let player_scores = {};
+        let completed_games = new Set();
+        let current_selected_game = null;
+        let is_dark_theme = true;
+
+        // Initialize scores for all players (starting at 0)
+        player_names.forEach(name => {
+            player_scores[name] = 0;
+        });
+
+        // Initialize the application
+        function initialize_game_night() {
+            render_player_scores();
+            render_games_grid();
+            render_game_suggestions();
+            setup_theme_toggle();
+            create_pie_chart();
+        }
+
+        // Render player score cards showing current totals
+        function render_player_scores() {
+            const container = document.getElementById('player_scores_container');
+            container.innerHTML = '';
+
+            player_names.forEach(name => {
+                const player_card = document.createElement('div');
+                player_card.className = 'player-card';
+                player_card.innerHTML = `
+                    <div class="player-info">
+                        <div class="player-name">${name}</div>
+                        <div class="player-total">${player_scores[name]} points</div>
+                    </div>
+                `;
+                container.appendChild(player_card);
+            });
+        }
+
+        // Render all 15 game buttons in a grid
+        function render_games_grid() {
+            const container = document.getElementById('games_grid_container');
+            container.innerHTML = '';
+
+            for (let game_number = 1; game_number <= 15; game_number++) {
+                const game_button = document.createElement('button');
+                game_button.className = 'game-button';
+                
+                // Check if game is already completed
+                if (completed_games.has(game_number)) {
+                    game_button.classList.add('completed');
+                }
+
+                game_button.textContent = `Game ${game_number}\n(${game_number} pts)`;
+                game_button.onclick = () => open_game_modal(game_number);
+                
+                container.appendChild(game_button);
+            }
+        }
+
+        // Render game suggestions organized by difficulty level
+        function render_game_suggestions() {
+            const container = document.getElementById('suggestions_container');
+            container.innerHTML = '';
+
+            Object.entries(game_suggestions).forEach(([category, games]) => {
+                const suggestion_group = document.createElement('div');
+                suggestion_group.className = 'suggestion-group';
+                
+                let suggestions_html = `<div class="suggestion-points">${category}</div><ul class="suggestion-list">`;
+                
+                games.forEach(game => {
+                    suggestions_html += `<li>• ${game}</li>`;
+                });
+                
+                suggestions_html += '</ul>';
+                suggestion_group.innerHTML = suggestions_html;
+                container.appendChild(suggestion_group);
+            });
+        }
+
+        // Create pie chart showing points distribution between players
+        // Chart.js documentation: https://www.chartjs.org/docs/latest/charts/doughnut.html
+        function create_pie_chart() {
+            const canvas = document.getElementById('score_distribution_chart');
+            
+            // Prepare data for pie chart
+            const scores = player_names.map(name => player_scores[name]);
+            
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: player_names,
+                    datasets: [{
+                        data: scores,
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Open modal when user clicks on a game
+        function open_game_modal(game_number) {
+            // Don't allow completed games to be selected again
+            if (completed_games.has(game_number)) {
+                return;
+            }
+
+            current_selected_game = game_number;
+            const modal = document.getElementById('game_modal');
+            
+            document.getElementById('modal_game_title').textContent = `Game ${game_number}`;
+            document.getElementById('modal_game_points').textContent = `Points: ${game_number}`;
+            document.getElementById('modal_game_description').textContent = 
+                `Ready to play Game ${game_number}? The winner will earn ${game_number} points!`;
+            
+            modal.style.display = 'block';
+        }
+
+        // Close the game modal
+        function close_game_modal() {
+            const modal = document.getElementById('game_modal');
+            modal.style.display = 'none';
+            current_selected_game = null;
+        }
+
+        // Mark a game as completed and award points to winner
+        function mark_game_completed() {
+            if (!current_selected_game) return;
+
+            // Ask which player won this game
+            const winner_name = prompt(`Which player won Game ${current_selected_game}?\n\nPlayers: ${player_names.join(', ')}`);
+            
+            // Check if winner name is valid
+            if (winner_name && player_names.includes(winner_name)) {
+                // Add points to winner
+                player_scores[winner_name] += current_selected_game;
+                completed_games.add(current_selected_game);
+
+                // Update all UI elements
+                render_player_scores();
+                render_games_grid();
+                update_progress_bar();
+                update_pie_chart();
+                
+                close_game_modal();
+            } else if (winner_name !== null) {
+                alert('Invalid player name. Please try again.');
+            }
+        }
+
+        // Update progress bar showing games completed
+        function update_progress_bar() {
+            const progress_percentage = (completed_games.size / 15) * 100;
+            document.getElementById('progress_fill_bar').style.width = progress_percentage + '%';
+            document.getElementById('completed_games_count').textContent = completed_games.size;
+        }
+
+        // Redraw pie chart when scores change
+        function update_pie_chart() {
+            // Destroy old chart and create new one
+            Chart.helpers.each(Chart.instances, function(instance) {
+                instance.destroy();
+            });
+            
+            create_pie_chart();
+        }
+
+        // Setup dark/light theme toggle
+        function setup_theme_toggle() {
+            const toggle_btn = document.getElementById('theme_toggle_btn');
+            toggle_btn.onclick = () => {
+                is_dark_theme = !is_dark_theme;
+                document.body.classList.toggle('light-theme');
+                toggle_btn.textContent = is_dark_theme ? '🌙 Dark Theme' : '☀️ Light Theme';
+            };
+        }
+
+        // Close modal when user clicks outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('game_modal');
+            if (event.target === modal) {
+                close_game_modal();
+            }
+        };
+
+        // Run initialization when page loads
+        window.addEventListener('DOMContentLoaded', initialize_game_night);
+    </script>
+</body>
+</html>
